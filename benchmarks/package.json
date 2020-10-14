@@ -1,0 +1,15 @@
+{
+  "name": "scrypt-benchmark",
+  "version": "0.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "benchmark": "^2.1.2",
+    "scrypt": "^6.0.3",
+    "scrypt-js": "^3.0.1"
+  },
+  "private": true
+}
