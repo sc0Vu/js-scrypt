@@ -1,6 +1,12 @@
 # scrypt-wasm
 Scrypt wasm binding for nodejs, maybe web browser
 
+# TODO
+- [x] build openssl to wasm
+- [x] build scrypt to wasm
+- [ ] fix crypto_scrypt() always return -1
+- [ ] add more tests
+
 # Benchmark
 Computer: 2.2 GHz 6-Core Intel Core i7
 ```

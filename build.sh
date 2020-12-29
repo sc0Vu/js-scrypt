@@ -1,31 +1,32 @@
 OPENSSL_DIR=$PWD/openssl
 SCRYPT_DIR=$PWD/scrypt
 
-# uname_os() {
-#   os=$(uname -s | tr '[:upper:]' '[:lower:]')
-#   case $os in
-#     msys*) os="windows" ;;
-#     mingw*) os="windows" ;;
-#   esac
-#   echo "${os}"
-# }
+uname_os() {
+  os=$(uname -s | tr '[:upper:]' '[:lower:]')
+  case $os in
+    msys*) os="windows" ;;
+    mingw*) os="windows" ;;
+  esac
+  echo "${os}"
+}
 
-# # build openssl
-# cd $OPENSSL_DIR
-# emconfigure ./config no-asm
-# OS=$(uname_os)
-# sed -i '' -e 's|^CROSS_COMPILE.*$|CROSS_COMPILE=|g' Makefile
-# if [ "$OS" = "darwin" ]; then
-#     sed -i '' -e 's|^CNF_CFLAGS.*$|CNF_CFLAGS=|g' Makefile
-#     sed -i '' -e 's|,-search_paths_first$||g' Makefile
-# fi
-# emmake make -j 12 build_generated libssl.a libcrypto.a
+# build openssl
+# test pass on macos
+cd $OPENSSL_DIR
+emconfigure ./config no-asm
+OS=$(uname_os)
+sed -i '' -e 's|^CROSS_COMPILE.*$|CROSS_COMPILE=|g' Makefile
+if [ "$OS" = "darwin" ]; then
+    sed -i '' -e 's|^CNF_CFLAGS.*$|CNF_CFLAGS=|g' Makefile
+    sed -i '' -e 's|,-search_paths_first$||g' Makefile
+fi
+emmake make -j 12 build_generated libssl.a libcrypto.a
 
-# # build scrypt
-# cd $SCRYPT_DIR
-# autoreconf -if --warnings=all
-# emconfigure ./configure --enable-libscrypt-kdf --disable-shared --disable-largefile CPPFLAGS="-I../openssl/include" LDFLAGS="-L../openssl"
-# emmake make
+# build scrypt
+cd $SCRYPT_DIR
+autoreconf -if --warnings=all
+emconfigure ./configure --enable-libscrypt-kdf --disable-shared --disable-largefile CPPFLAGS="-I../openssl/include" LDFLAGS="-L../openssl"
+emmake make
 
 EMCC_OPTIONS=(
     -O3
@@ -57,5 +58,4 @@ EMCC_WASM_OPTIONS=(
 )
 
 echo "Build scrypt"
-# emcc "${EMCC_OPTIONS[@]}" "${EMCC_WEB_OPTIONS[@]}" "${EMCC_SCRYPT_OPTIONS[@]}" "${EMCC_WASM_OPTIONS[@]}" $SCRYPT_DIR/.libs/libscrypt-kdf.a -o lib/scrypt.js
 emcc "${EMCC_OPTIONS[@]}" "${EMCC_WEB_OPTIONS[@]}" "${EMCC_SCRYPT_OPTIONS[@]}" "${EMCC_WASM_OPTIONS[@]}" $SCRYPT_DIR/.libs/*.a -o lib/scrypt.js
