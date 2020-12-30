@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <title>Scrypt test</title>
+    <script src="https://cdn.jsdelivr.net/npm/scrypt-js@3.0.1/thirdparty/buffer.js" integrity="sha256-V1jcWut15jeguVrtvhGvdEg2oUfySAqp9SPBlYYM850=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scrypt-js@3.0.1/scrypt.js" integrity="sha256-VEKSk0E2Un1grMnjN9jHuVP0EugTFKpVGhLUIwr9RJ0=" crossorigin="anonymous"></script>
+    <script src="../dist/bundle.js"></script>
+    <script src="../dist/1.bundle.js"></script>
+  </head>
+  <body>
+    <script>
+      const pwd = new buffer.SlowBuffer("hunter2".normalize('NFKC'))
+      const salt = new buffer.SlowBuffer("DANGER -- this should be a random salt -- DANGER".normalize('NFKC'))
+
+      const N = 1024, r = 8, p = 1;
+      const dkLen = 32;
+      let success = true
+      const key = scrypt.syncScrypt(pwd, salt, N, r, p, dkLen);
+      SCRYPT()
+        .then(function (scrypt) {
+          const key2 = s.kdf(pwd.toString('utf8'), "utf8", salt.toString('utf8'), "utf8", dkLen, {N: N, r: r, p: p})
+          // test key is equal to key2
+        })
+        .catch(function (err) {
+          success = false
+        })
+        .then(function () {
+          if (success) {
+            document.title += ' succed'
+          }
+        })
+    </script>
+  </body>
+</html>

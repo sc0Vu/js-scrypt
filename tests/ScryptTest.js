@@ -1,6 +1,4 @@
 const assert = require('assert')
-const { ConsoleWriter } = require('istanbul-lib-report')
-const Buffer = require('buffer').Buffer
 const ScryptAsync = require('../dist/node-bundle.js')
 const Scrypt = require('crypto').scrypt
 
@@ -10,7 +8,12 @@ describe('ScryptTest', function () {
   const salt = "DANGER -- this should be a random salt -- DANGER"
 
   beforeEach(async function () {
-    scrypt = await ScryptAsync()
+    try {
+      scrypt = await ScryptAsync()
+    } catch (err) {
+      console.log(err)
+      assert.fail(err)
+    }
   })
 
   it ('Shoud return kdf', function (done) {
@@ -21,19 +24,15 @@ describe('ScryptTest', function () {
     }
     const dklen = 8
 
-    let newKdf = scrypt.kdf(pwd, salt, dklen, opts)
+    let newKdf = scrypt.kdf(pwd, 'utf8', salt, 'utf8', dklen, opts)
 
     opts.dklen = dklen
     opts.maxmem = 128 * opts.N * opts.r * opts.p * opts.dklen;
-    Scrypt(pwd, salt, opts.dklen, opts, function (err, dk) {
-      // if (err) {
-      //   console.log(err)
-      // } else {
-      //   console.log(dk)
-      // }
-      console.log(dk, newKdf)
-      console.log(dk, newKdf)
-      console.log(dk, newKdf)
+    Scrypt(pwd, salt, opts.dklen, opts, function (err, kdf) {
+      if (err) {
+        assert.fail(err)
+      }
+      assert.strictEqual(kdf.toString('hex'), newKdf.toString('hex'))
       setTimeout(() => {
         done()
       }, 1000)

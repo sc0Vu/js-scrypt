@@ -1,80 +1,53 @@
-const ScryptWasm = require('./lib/scrypt.wasm')
-const Scrypt = require('./lib/scrypt.js')
+// TextEncoder polyfill
+require('fast-text-encoding')
+
 const Buffer = require('buffer/').Buffer
-const isBuffer = require('is-buffer')
 
-module.exports = function () {
-  options = {
-    instantiateWasm: function (info, successCallback) {
-      return ScryptWasm(info)
-              .then(function (i) {
-                return successCallback(i.instance)
-              })
-    }
-  }
-  return new Promise(function (resolve, reject) {
-    Scrypt(options).then(function (s) {
-      let scrypt = {}
+module.exports = async function () {
+  const s = await import('scrypt-wasm')
+  let scrypt = {}
 
-      // 769 is sign and recover context
-      Object.defineProperties(scrypt, {
-        s: {
-          writable: false,
-          value: s
-        },
-        defaultOptions: {
-          writable: false,
-          value: {
-            N: 16384,
-            r: 8,
-            p: 1,
-          }
-        },
-      })
-
-      scrypt.copyToBuffer = function (src, len) {
-        let out = new Buffer(len)
-        for (var i=0; i<len; i++) {
-          let v = this.s.getValue(src + i, 'i8')
-          out[i] = v
-        }
-        return out
+  Object.defineProperties(scrypt, {
+    s: {
+      writable: false,
+      value: s
+    },
+    defaultOptions: {
+      writable: false,
+      value: {
+        N: 16384,
+        r: 8,
+        p: 1,
       }
-
-      scrypt.kdf = function (pwd, salt, dkLen, options = {}) {
-        return this._kdf(Buffer.from(pwd), Buffer.from(salt), dkLen, options)
-      }
-
-      scrypt._kdf = function (pwdBuf, saltBuf, dkLen, options = {}) {
-        if (isBuffer(pwdBuf) !== true) {
-          return false
-        }
-        if (isBuffer(saltBuf) !== true) {
-          return false
-        }
-        const pwdLen = pwdBuf.length
-        const saltLen = saltBuf.length
-        const opts = Object.assign(this.defaultOptions, options)
-        let pwd = this.s._malloc(pwdLen)
-        let salt = this.s._malloc(saltLen)
-        this.s.HEAP8.set(pwdBuf, pwd)
-        this.s.HEAP8.set(saltBuf, salt)
-        let dk = this.s._malloc(dkLen)
-        let ret = this.s._crypto_scrypt(pwd, pwdLen, salt, saltLen, opts.N, opts.r, opts.p, dk, dkLen)
-        if (ret != 0) {
-          this.s._free(pwd)
-          this.s._free(salt)
-          this.s._free(dk)
-          return false
-        }
-        let rdk = this.copyToBuffer(dk, dkLen)
-        this.s._free(pwd)
-        this.s._free(salt)
-        this.s._free(dk)
-        return rdk
-      }
-
-      resolve(scrypt)
-    })
+    },
   })
+
+  scrypt.toHex = function (str, enc='utf8') {
+    if (typeof str !== 'string') {
+      throw new Error('toHex str should use string')
+    }
+    if (typeof enc !== 'string') {
+      throw new Error('toHex enc should use string')
+    }
+    if (enc !== 'utf8' && enc !== 'hex') {
+      throw new Error('toHex unsupport encoding')
+    }
+    return Buffer.from(str, enc).toString('hex')
+  }
+
+  // pwd, salt should be string
+  scrypt.kdf = function (pwd, pwdEnc, salt, saltEnc, dkLen, options = {}) {
+    if (typeof pwd !== 'string' || typeof salt !== 'string') {
+      throw new Error('kdf pwd/salt should be string')
+    }
+    if (pwdEnc != 'hex') {
+      pwd = this.toHex(pwd, pwdEnc)
+    }
+    if (saltEnc != 'hex') {
+      salt = this.toHex(salt, saltEnc)
+    }
+    const _kdf = this.s.scrypt(pwd, salt, options.N, options.r, options.p, dkLen)
+    return Buffer.from(_kdf, 'hex')
+  }
+  return scrypt
 }
