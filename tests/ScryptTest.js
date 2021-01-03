@@ -11,7 +11,6 @@ describe('ScryptTest', function () {
     try {
       scrypt = await ScryptAsync()
     } catch (err) {
-      console.log(err)
       assert.fail(err)
     }
   })
@@ -24,7 +23,7 @@ describe('ScryptTest', function () {
     }
     const dklen = 8
 
-    let newKdf = scrypt.kdf(pwd, 'utf8', salt, 'utf8', dklen, opts)
+    const newKdf = scrypt.kdf(pwd, 'utf8', salt, 'utf8', dklen, opts)
 
     opts.dklen = dklen
     opts.maxmem = 128 * opts.N * opts.r * opts.p * opts.dklen;

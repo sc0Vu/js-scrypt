@@ -11,16 +11,25 @@
       const pwd = new buffer.SlowBuffer("hunter2".normalize('NFKC'))
       const salt = new buffer.SlowBuffer("DANGER -- this should be a random salt -- DANGER".normalize('NFKC'))
 
-      const N = 1024, r = 8, p = 1;
-      const dkLen = 32;
+      const N = 16384, r = 4, p = 1;
+      const dkLen = 8;
       let success = true
       const key = scrypt.syncScrypt(pwd, salt, N, r, p, dkLen);
       SCRYPT()
-        .then(function (scrypt) {
+        .then(function (s) {
           const key2 = s.kdf(pwd.toString('utf8'), "utf8", salt.toString('utf8'), "utf8", dkLen, {N: N, r: r, p: p})
           // test key is equal to key2
+          if (key.length != key2.length) {
+            throw new Error('cannot do kdf of given parameters')
+          }
+          for (let i=0; i<key.length; i++) {
+            if (key[i] !== key2[i]) {
+              throw new Error('cannot do kdf of given parameters')
+            }
+          }
         })
         .catch(function (err) {
+          console.warn(err)
           success = false
         })
         .then(function () {
