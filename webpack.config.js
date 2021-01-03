@@ -17,11 +17,13 @@ const nodeConfig = {
   },
   module: {
     rules: [
+      // won't load module, have to dig into: https://github.com/WebAssembly/binaryen/issues/670
+      // also: https://www.assemblyscript.org/exports-and-imports.html#imports
       {
-        test: /scrypt\.wasm$/,
+        test: /scrypt_wasm_bg\.wasm$/,
         type: "javascript/auto",
         loader: "wasm-loader",
-      }
+      },
     ]
   }
 }
@@ -32,7 +34,7 @@ const browserConfig = {
   context: path.resolve(__dirname, "."),
   entry: "./index.js",
   output: {
-    library: 'SECP256K1',
+    library: 'SCRYPT',
     libraryTarget: 'var',
     path: path.resolve(__dirname, "dist"),
     filename: "bundle.js"
@@ -43,10 +45,10 @@ const browserConfig = {
   module: {
     rules: [
       {
-        test: /secp256k1\.wasm$/,
+        test: /scrypt_wasm_bg\.wasm$/,
         type: "javascript/auto",
         loader: "wasm-loader",
-      }
+      },
     ]
   }
 }
