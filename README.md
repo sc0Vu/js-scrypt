@@ -1,7 +1,33 @@
 # scrypt-wasm
 Scrypt wasm binding for nodejs and web browser
 
+# Install
+
+```BASH
+$ npm i wasm-script
+```
+
 # Usage
+
+* Initialize
+```JS
+const wasm = require('wasm-scrypt')
+const opts = {
+  './scrypt_wasm': {
+    'memory': new WebAssembly.Memory({initial: 256, limit: 256}),
+    'memoryBase': 1024,
+    'table': new WebAssembly.Table({initial: 0, element: 'anyfunc'}),
+    'tableBase': 0,
+    __wbindgen_throw: function (ptr, len) {
+      return new Error(`Custom error message...`)
+    },
+  }
+}
+wasm().then((scrypt) => {
+  // do kdf
+  // scrypt.kdf(...)
+})
+```
 
 * KDF
 ```JS
