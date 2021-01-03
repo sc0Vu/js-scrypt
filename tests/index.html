@@ -17,13 +17,20 @@
       const key = scrypt.syncScrypt(pwd, salt, N, r, p, dkLen);
       SCRYPT()
         .then(function (s) {
-          const key2 = s.kdf(pwd.toString('utf8'), "utf8", salt.toString('utf8'), "utf8", dkLen, {N: N, r: r, p: p})
+          const opts = {N: N, r: r, p: p}
+          const key2 = s.kdf(pwd.toString('utf8'), "utf8", salt.toString('utf8'), "utf8", dkLen, opts)
+          const key3 = s.kdf(pwd.toString('hex'), 'hex', salt.toString('hex'), 'hex', dklen, opts)
           // test key is equal to key2
           if (key.length != key2.length) {
             throw new Error('cannot do kdf of given parameters')
           }
           for (let i=0; i<key.length; i++) {
             if (key[i] !== key2[i]) {
+              throw new Error('cannot do kdf of given parameters')
+            }
+          }
+          for (let i=0; i<key.length; i++) {
+            if (key[i] !== key3[i]) {
               throw new Error('cannot do kdf of given parameters')
             }
           }

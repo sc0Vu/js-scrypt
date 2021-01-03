@@ -1,6 +1,7 @@
 const assert = require('assert')
 const ScryptAsync = require('../dist/node-bundle.js')
 const Scrypt = require('crypto').scrypt
+const Buffer = require('buffer/').Buffer
 
 describe('ScryptTest', function () {
   var scrypt
@@ -24,6 +25,7 @@ describe('ScryptTest', function () {
     const dklen = 8
 
     const newKdf = scrypt.kdf(pwd, 'utf8', salt, 'utf8', dklen, opts)
+    const newKdf2 = scrypt.kdf(Buffer.from(pwd).toString('hex'), 'hex', Buffer.from(salt).toString('hex'), 'hex', dklen, opts)
 
     opts.dklen = dklen
     opts.maxmem = 128 * opts.N * opts.r * opts.p * opts.dklen;
@@ -32,6 +34,7 @@ describe('ScryptTest', function () {
         assert.fail(err)
       }
       assert.strictEqual(kdf.toString('hex'), newKdf.toString('hex'))
+      assert.strictEqual(kdf.toString('hex'), newKdf2.toString('hex'))
       setTimeout(() => {
         done()
       }, 1000)

@@ -2,12 +2,30 @@
 // TODO: remove fast-text-encoding
 require('fast-text-encoding')
 
-const Buffer = require('buffer/').Buffer
 const scryptWasm = require('./lib/scrypt_wasm_bg.wasm')
-let textDecoder = new TextDecoder('utf-8')
+const Buffer = require('buffer/').Buffer
+const textDecoder = new TextDecoder('utf-8')
 
-module.exports = async function () {
-  const s = await scryptWasm()
+module.exports = async function (opts) {
+  const impOpts = Object.assign({
+    'global': {},
+    'env': {
+      'memory': new WebAssembly.Memory({initial: 256, limit: 256}),
+      'memoryBase': 1024,
+      'table': new WebAssembly.Table({initial: 0, element: 'anyfunc'})
+    },
+    './scrypt_wasm': {
+      'memory': new WebAssembly.Memory({initial: 256, limit: 256}),
+      'memoryBase': 1024,
+      'table': new WebAssembly.Table({initial: 0, element: 'anyfunc'}),
+      'tableBase': 0,
+      __wbindgen_throw: function (ptr, len) {
+        // TODO: fetch error
+        return new Error(`Got error at ${ptr} len ${len}`)
+      },
+    }
+  }, opts)
+  const s = await scryptWasm(impOpts)
   let scrypt = {}
 
   Object.defineProperties(scrypt, {
