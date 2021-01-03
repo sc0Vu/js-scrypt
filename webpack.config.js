@@ -19,11 +19,11 @@ const nodeConfig = {
     rules: [
       // won't load module, have to dig into: https://github.com/WebAssembly/binaryen/issues/670
       // also: https://www.assemblyscript.org/exports-and-imports.html#imports
-      // {
-      //   test: /scrypt_wasm_bg\.wasm$/,
-      //   type: "javascript/auto",
-      //   loader: "wasm-loader",
-      // },
+      {
+        test: /scrypt_wasm_bg\.wasm$/,
+        type: "javascript/auto",
+        loader: "wasm-loader",
+      },
     ]
   }
 }
@@ -44,11 +44,11 @@ const browserConfig = {
   },
   module: {
     rules: [
-      // {
-      //   test: /scrypt_wasm_bg\.wasm$/,
-      //   type: "javascript/auto",
-      //   loader: "wasm-loader",
-      // },
+      {
+        test: /scrypt_wasm_bg\.wasm$/,
+        type: "javascript/auto",
+        loader: "wasm-loader",
+      },
     ]
   }
 }

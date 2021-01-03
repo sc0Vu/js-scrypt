@@ -1,16 +1,19 @@
-// TextEncoder polyfill
+// text encoding
+// TODO: remove fast-text-encoding
 require('fast-text-encoding')
 
 const Buffer = require('buffer/').Buffer
+const scryptWasm = require('./lib/scrypt_wasm_bg.wasm')
+let textDecoder = new TextDecoder('utf-8')
 
 module.exports = async function () {
-  const s = await import('scrypt-wasm')
+  const s = await scryptWasm()
   let scrypt = {}
 
   Object.defineProperties(scrypt, {
     s: {
       writable: false,
-      value: s
+      value: s.instance.exports
     },
     defaultOptions: {
       writable: false,
@@ -20,7 +23,23 @@ module.exports = async function () {
         p: 1,
       }
     },
+    globalArgumentPtr: {
+      writable: false,
+      value: s.instance.exports.__wbindgen_global_argument_ptr(),
+    },
   })
+
+  scrypt.malloc = function (str) {
+    const buf = this.toBuffer(str, 'utf8')
+    const ptr = this.s.__wbindgen_malloc(buf.length);
+    const uint8Memory = new Buffer(s.instance.exports.memory.buffer)
+    uint8Memory.set(buf, ptr)
+    return [ptr, buf.length]
+  }
+
+  scrypt.free = function (ptr, len) {
+    this.s.__wbindgen_free(ptr, len);
+  }
 
   scrypt.toHex = function (str, enc='utf8') {
     if (typeof str !== 'string') {
@@ -35,19 +54,47 @@ module.exports = async function () {
     return Buffer.from(str, enc).toString('hex')
   }
 
+  scrypt.toBuffer = function (str, enc='utf8') {
+    if (typeof str !== 'string') {
+      throw new Error('toBuffer str should use string')
+    }
+    if (typeof enc !== 'string') {
+      throw new Error('toBuffer enc should use string')
+    }
+    if (enc !== 'utf8' && enc !== 'hex') {
+      throw new Error('toBuffer unsupport encoding')
+    }
+    return Buffer.from(str, enc)
+  }
+
   // pwd, salt should be string
   scrypt.kdf = function (pwd, pwdEnc, salt, saltEnc, dkLen, options = {}) {
     if (typeof pwd !== 'string' || typeof salt !== 'string') {
       throw new Error('kdf pwd/salt should be string')
     }
+    let pwdLen, saltLen = 0
     if (pwdEnc != 'hex') {
       pwd = this.toHex(pwd, pwdEnc)
     }
+    [pwd, pwdLen] = this.malloc(pwd)
     if (saltEnc != 'hex') {
       salt = this.toHex(salt, saltEnc)
     }
-    const _kdf = this.s.scrypt(pwd, salt, options.N, options.r, options.p, dkLen)
-    return Buffer.from(_kdf, 'hex')
+    [salt, saltLen] = this.malloc(salt)
+    const retptr = this.globalArgumentPtr
+    try {
+      this.s.scrypt(retptr, pwd, pwdLen, salt, saltLen, options.N, options.r, options.p, dkLen)
+      const mem = new Uint32Array(s.instance.exports.memory.buffer)
+      const rustptr = mem[retptr / 4]
+      const rustlen = mem[retptr / 4 + 1]
+      const uint8Memory = new Buffer(s.instance.exports.memory.buffer)
+      const realRet = textDecoder.decode(uint8Memory.subarray(rustptr, rustptr + rustlen)).slice()
+      this.free(rustptr, rustlen * 1)
+      return Buffer.from(realRet, 'hex')
+    } finally {
+      this.free(pwd)
+      this.free(salt)
+    }
   }
   return scrypt
 }
